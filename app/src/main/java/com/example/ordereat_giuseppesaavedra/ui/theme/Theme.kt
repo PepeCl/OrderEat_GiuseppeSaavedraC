@@ -7,7 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-// 1. DEFINICIÓN DE ESQUEMAS DE COLOR (DEBE ESTAR FUERA DE CUALQUIER FUNCIÓN)
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
@@ -18,7 +17,6 @@ private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
     tertiary = Pink40
-    /* Otras sobreescrituras (si las tienes) */
 )
 // -------------------------------------------------------------------------
 

@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,12 +18,31 @@ import com.example.ordereat_giuseppesaavedra.model.Plato
 import com.example.ordereat_giuseppesaavedra.viewmodel.MenuViewModel
 
 @Composable
-fun MenuScreen(viewModel: MenuViewModel, onVerCarrito: () -> Unit) {
+fun MenuScreen(viewModel: MenuViewModel,
+               onVerCarrito: () -> Unit,
+                onLogout: () -> Unit) {
 
     val platos by viewModel.platos.collectAsState()
+    val totalItemsCarrito by viewModel.carrito.collectAsState().value.values.sum().let {
+        rememberUpdatedState(it)
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Menú del Restaurant", style = MaterialTheme.typography.headlineMedium)
+
+        //Encabezado principal con título y boton de cerrar sesión.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Menú del Restaurant", style = MaterialTheme.typography.headlineMedium)
+            IconButton(onClick = onLogout) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Cerrar Sesión"
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -36,13 +58,13 @@ fun MenuScreen(viewModel: MenuViewModel, onVerCarrito: () -> Unit) {
             }
         }
 
-        // Botón al pie de la pantalla
+        // Botón al pie de la pantalla.
         Button(
             onClick = onVerCarrito,
             modifier = Modifier.fillMaxWidth()
         ) {
             // Muestra la cantidad total de ítems en el carrito
-            Text("Ver Carrito (${viewModel.carrito.collectAsState().value.values.sum()} ítems)")
+            Text("Ver Carrito ($totalItemsCarrito ítems)")
         }
     }
 }
@@ -58,7 +80,6 @@ fun PlatoItem(plato: Plato, onAgregarAlCarrito: () -> Unit) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(plato.nombre, style = MaterialTheme.typography.titleMedium)
-            // PRECIO CORREGIDO: Muestra el Int directamente sin formato decimal
             Text("$${plato.precio}", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
         }
         Button(onClick = onAgregarAlCarrito) {

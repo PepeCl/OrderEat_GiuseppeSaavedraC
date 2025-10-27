@@ -17,16 +17,31 @@ import androidx.compose.ui.unit.dp
 import com.example.ordereat_giuseppesaavedra.model.Plato
 import com.example.ordereat_giuseppesaavedra.viewmodel.MenuViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Imports para animaciones de Compose
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+
+//Con esto habilitamos el uso de APIs experimentales de Material 3 y Animación
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun CarritoScreen(
     viewModel: MenuViewModel,
     onVolverAlMenu: () -> Unit,
     onConfirmarPedido: () -> Unit
 ) {
+    //Observa el estado del carrito. La UI se recompone automáticamente si cambia.
     val carritoItems by viewModel.carrito.collectAsState()
-    val total = viewModel.calcularTotal() // Ahora es Int
+    val total by viewModel.total.collectAsState()
 
+    //Creamos un estado de animación para una transición "suave".
+    val totalAnimado by animateIntAsState(
+        targetValue = total,
+        label = "TotalAnimado"
+    )
+    //Definimos la estructura principal de la pantalla con Material 3.
     Scaffold(
         topBar = {
             TopAppBar(
@@ -41,14 +56,15 @@ fun CarritoScreen(
         bottomBar = {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Text(
-                    // PRECIO CORREGIDO: Muestra Int
-                    text = "Total a Pagar: $$total",
+                    //Mostramos el valor animado del total.
+                    text = "Total a Pagar: $$totalAnimado",
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.align(Alignment.End)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = onConfirmarPedido,
+                    //El estado de este boton depende del estado del carrito.
                     enabled = carritoItems.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -57,36 +73,55 @@ fun CarritoScreen(
             }
         }
     ) { paddingValues ->
-        if (carritoItems.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
-                contentAlignment = Alignment.Center
+        //Definimos un contenedor para gestionar la visivilidad condicional de nuestro carrito.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+
+            // Mostramos la lista solo si hay ítems con animación "fundido"
+            AnimatedVisibility(
+                visible = carritoItems.isNotEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
-                Text("Tu carrito está vacío.", style = MaterialTheme.typography.bodyLarge)
-            }
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                items(carritoItems.keys.toList()) { plato ->
-                    CarritoItem(
-                        plato = plato,
-                        cantidad = carritoItems[plato] ?: 0,
-                        onAumentar = { viewModel.agregarPlatoAlCarrito(plato) },
-                        onDisminuir = { viewModel.eliminarPlatoDelCarrito(plato) }
-                    )
-                    Divider()
+                //Renderizamos la lista de platos.
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(carritoItems.keys.toList()) { plato ->
+                        CarritoItem(
+                            plato = plato,
+                            cantidad = carritoItems[plato] ?: 0,
+                            onAumentar = { viewModel.agregarPlatoAlCarrito(plato) },
+                            onDisminuir = { viewModel.eliminarPlatoDelCarrito(plato) }
+                        )
+                        Divider()
+                        }
+                    }
                 }
+                //Mostramos el estado "vacío" cuando la lista está vacía.
+                AnimatedVisibility(
+                    visible = carritoItems.isEmpty(),
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier.align(Alignment.Center) // Centra el texto
+                ) {
+                Text("Tu carrito está vacío.", style = MaterialTheme.typography.bodyLarge)
+                }
+
             }
         }
     }
-}
 
 @Composable
+//Definimos nuestro carrito con sus funciones de aumentar o disminuir items.
 fun CarritoItem(
     plato: Plato,
     cantidad: Int,
     onAumentar: () -> Unit,
     onDisminuir: () -> Unit
 ) {
+    //Damos los parámetros para mostrar nuestro carrito de forma ordenada.
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -96,7 +131,6 @@ fun CarritoItem(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(plato.nombre, style = MaterialTheme.typography.bodyLarge)
-            // PRECIO CORREGIDO: Muestra Int
             Text("Precio: $${plato.precio}", style = MaterialTheme.typography.bodySmall)
         }
 
