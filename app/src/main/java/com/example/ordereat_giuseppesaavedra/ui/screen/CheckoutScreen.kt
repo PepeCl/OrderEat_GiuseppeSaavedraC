@@ -13,31 +13,22 @@ import com.example.ordereat_giuseppesaavedra.viewmodel.MenuViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+
 fun CheckoutScreen(
     viewModel: MenuViewModel,
     onVolverAlCarrito: () -> Unit,
     onFinalizarPedido: () -> Unit
 ) {
-    // Observamos los datos del formulario desde el ViewModel
+    //Se consume el estado del ViewModel.
     val nombre by viewModel.nombre.collectAsState()
     val direccion by viewModel.direccion.collectAsState()
     val telefono by viewModel.telefono.collectAsState()
 
-    // Estados locales para manejar si se ha intentado enviar y si hay errores de validación.
-    var isNombreError by remember { mutableStateOf(false) }
-    var isDireccionError by remember { mutableStateOf(false) }
-    var isTelefonoError by remember { mutableStateOf(false) }
+    //Se consume el estado de error.
+    val nombreError by viewModel.nombreError.collectAsState()
+    val direccionError by viewModel.direccionError.collectAsState()
+    val telefonoError by viewModel.telefonoError.collectAsState()
 
-    fun validarFormulario(): Boolean {
-        // Ejecutamos la validación.
-        isNombreError = nombre.isBlank()
-        isDireccionError = direccion.isBlank()
-        isTelefonoError = telefono.length < 9 // Ejemplo: teléfono debe tener al menos 9 dígitos
-
-        // Retorna true si no hay errores.
-        return !isNombreError && !isDireccionError && !isTelefonoError
-    }
-    //Definimos la estructura de la pantalla con barra superior.
     Scaffold(
         topBar = {
             TopAppBar(
@@ -64,63 +55,55 @@ fun CheckoutScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo Nombre con verificación dicho campo.
+            //Campo Nombre.
             OutlinedTextField(
                 value = nombre,
-                onValueChange = {
-                    viewModel.onNombreChange(it)
-                    if (isNombreError) isNombreError = it.isBlank() // Re-valida al escribir
-                },
+                onValueChange = viewModel::onNombreChange, // Referencia al método del ViewModel
                 label = { Text("Nombre Completo") },
                 modifier = Modifier.fillMaxWidth(),
-                isError = isNombreError,
+                isError = nombreError != null,
                 supportingText = {
-                    if (isNombreError) Text("El nombre es requerido")
+                    if (nombreError != null) Text(nombreError!!)
                 },
                 singleLine = true
             )
 
-            // Campo Dirección con verificación dicho campo.
+            //Campo Dirección.
             OutlinedTextField(
                 value = direccion,
-                onValueChange = {
-                    viewModel.onDireccionChange(it)
-                    if (isDireccionError) isDireccionError = it.isBlank()
-                },
+                onValueChange = viewModel::onDireccionChange,
                 label = { Text("Dirección de Entrega") },
                 modifier = Modifier.fillMaxWidth(),
-                isError = isDireccionError,
+                // --- VINCULACIÓN A ERROR STATEFLOW ---
+                isError = direccionError != null,
                 supportingText = {
-                    if (isDireccionError) Text("La dirección es requerida")
+                    if (direccionError != null) Text(direccionError!!)
                 },
                 singleLine = true
             )
 
-            // Campo Teléfono con verificación dicho campo.
+            //Campo Teléfono.
             OutlinedTextField(
                 value = telefono,
-                onValueChange = {
-                    viewModel.onTelefonoChange(it.filter { c -> c.isDigit() }) // Solo números
-                    if (isTelefonoError) isTelefonoError = it.length < 9
-                },
+                onValueChange = viewModel::onTelefonoChange,
                 label = { Text("Teléfono de Contacto") },
                 modifier = Modifier.fillMaxWidth(),
-                isError = isTelefonoError,
+                isError = telefonoError != null,
                 supportingText = {
-                    if (isTelefonoError) Text("Debe tener al menos 9 dígitos")
+                    if (telefonoError != null) Text(telefonoError!!)
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.weight(1f)) // Empuja el botón al fondo
+            Spacer(modifier = Modifier.weight(1f))
 
-            // Botón para finalizar.
+            //Botón Finalizar.
             Button(
                 onClick = {
-                    if (validarFormulario()) {
-                        // Si la validación es exitosa entonces navega.
-                        onFinalizarPedido()
+                    //La lógica de negocio (validación) se ejecuta en el ViewModel.
+                    if (viewModel.validarCheckout()) {
+                        onFinalizarPedido() // Navega si es válido.
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp)

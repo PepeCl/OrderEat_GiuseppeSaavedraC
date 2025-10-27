@@ -169,7 +169,7 @@ fun ConfirmationScreenContent(
     onNewOrder: () -> Unit
 ) {
     //Definimos el texto que aparecerá al compartir.
-    val total = viewModel.total.collectAsState()
+    val total by viewModel.total.collectAsState()
     val nombre by viewModel.nombre.collectAsState()
     val direccion by viewModel.direccion.collectAsState()
     val context = LocalContext.current

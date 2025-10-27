@@ -11,8 +11,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.ordereat_giuseppesaavedra.viewmodel.AuthViewModel
 
-
-//Definimos la pantalla de inicio de sesión con formulario.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -20,9 +18,14 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
+    // Observamos el estado de los campos.
     val correo by authViewModel.correo.collectAsState()
     val contrasena by authViewModel.contrasena.collectAsState()
-    var showError by remember { mutableStateOf(false) }
+
+    // Observamos el estado de los errores.
+    val correoError by authViewModel.correoError.collectAsState()
+    val contrasenaError by authViewModel.contrasenaError.collectAsState()
+
 
     Column(
         modifier = Modifier
@@ -40,10 +43,12 @@ fun LoginScreen(
             label = { Text("Correo Electrónico") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            singleLine = true
+            singleLine = true,
+            isError = correoError != null,
+            supportingText = {
+                if (correoError != null) Text(correoError!!)
+            }
         )
-        //Campo de texto de la contraseña.
-        //Usamos PasswordVisualTransformation() para ocultar la entrada de caracteres.
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = contrasena,
@@ -52,34 +57,25 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            singleLine = true
+            singleLine = true,
+            isError = contrasenaError != null,
+            supportingText = {
+                if (contrasenaError != null) Text(contrasenaError!!)
+            }
         )
-
-        if (showError) {
-            Text(
-                "Correo o contraseña inválidos.",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
                 if (authViewModel.login()) {
-                    showError = false
                     onLoginSuccess() // Navega al menú
-                } else {
-                    showError = true
                 }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Ingresar")
         }
-
-        //Definimos un botton para la pantalla de registro.
 
         TextButton(onClick = onNavigateToRegister) {
             Text("¿No tienes cuenta? Regístrate")

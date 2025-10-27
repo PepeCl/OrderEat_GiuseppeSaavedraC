@@ -11,8 +11,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.ordereat_giuseppesaavedra.viewmodel.AuthViewModel
 
-
-//Definimos la pantalla de registro.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
@@ -20,13 +18,16 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+    //Observamos el estado de los campos.
     val nombre by authViewModel.nombre.collectAsState()
     val correo by authViewModel.correo.collectAsState()
     val contrasena by authViewModel.contrasena.collectAsState()
-    var showError by remember { mutableStateOf(false) }
 
+    //Observamos el estado de los errores.
+    val nombreError by authViewModel.nombreError.collectAsState()
+    val correoError by authViewModel.correoError.collectAsState()
+    val contrasenaError by authViewModel.contrasenaError.collectAsState()
 
-    //Definimos el contenedor principal que centra el formulario.
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -42,7 +43,11 @@ fun RegisterScreen(
             onValueChange = { authViewModel.onNombreChange(it) },
             label = { Text("Nombre Completo") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = nombreError != null,
+            supportingText = {
+                if (nombreError != null) Text(nombreError!!)
+            }
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
@@ -51,7 +56,11 @@ fun RegisterScreen(
             label = { Text("Correo Electrónico") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            singleLine = true
+            singleLine = true,
+            isError = correoError != null,
+            supportingText = {
+                if (correoError != null) Text(correoError!!)
+            }
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
@@ -61,26 +70,19 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            singleLine = true
+            singleLine = true,
+            isError = contrasenaError != null,
+            supportingText = {
+                if (contrasenaError != null) Text(contrasenaError!!)
+            }
         )
-
-        if (showError) {
-            Text(
-                "Todos los campos son requeridos.",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
                 if (authViewModel.register()) {
-                    showError = false
-                    onRegisterSuccess() // Navega al menú
-                } else {
-                    showError = true
+                    onRegisterSuccess()
                 }
             },
             modifier = Modifier.fillMaxWidth()

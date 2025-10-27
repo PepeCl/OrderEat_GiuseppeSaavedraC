@@ -37,10 +37,32 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
     private val _telefono = MutableStateFlow("")
     val telefono: StateFlow<String> = _telefono.asStateFlow()
 
-    fun onNombreChange(nuevoNombre: String) { _nombre.value = nuevoNombre }
-    fun onDireccionChange(nuevaDireccion: String) { _direccion.value = nuevaDireccion }
-    fun onTelefonoChange(nuevoTelefono: String) { _telefono.value = nuevoTelefono }
+    // Estado de errores para cada campo del Checkout.
+    private val _nombreError = MutableStateFlow<String?>(null)
+    val nombreError: StateFlow<String?> = _nombreError.asStateFlow()
 
+    private val _direccionError = MutableStateFlow<String?>(null)
+    val direccionError: StateFlow<String?> = _direccionError.asStateFlow()
+
+    private val _telefonoError = MutableStateFlow<String?>(null)
+    val telefonoError: StateFlow<String?> = _telefonoError.asStateFlow()
+
+
+    fun onNombreChange(nuevoNombre: String) {
+        _nombre.value = nuevoNombre
+        if (_nombreError.value != null) _nombreError.value = null // Limpia error al escribir
+    }
+
+    fun onDireccionChange(nuevaDireccion: String) {
+        _direccion.value = nuevaDireccion
+        if (_direccionError.value != null) _direccionError.value = null // Limpia error al escribir
+    }
+
+    fun onTelefonoChange(nuevoTelefono: String) {
+        // Filtramos para permitir solo dígitos y actualizamos el valor.
+        _telefono.value = nuevoTelefono.filter { it.isDigit() }
+        if (_telefonoError.value != null) _telefonoError.value = null // Limpia error al escribir
+    }
    //Definimos un "StateFlow" que actualiza el valor del carrito.
     val total: StateFlow<Int> = _carrito.map { carritoMap ->
         // Esta es la misma lógica de tu función calcularTotal()
@@ -112,6 +134,37 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             carritoDataStore.limpiarCarrito()
         }
+    }
+
+    //Acá se ejecuta la validación de la lógica del negocio para el CheckOut.
+    fun validarCheckout(): Boolean {
+        // Resetea los errores
+        _nombreError.value = null
+        _direccionError.value = null
+        _telefonoError.value = null
+
+        var isValid = true
+
+        //Validación de Nombre.
+        if (_nombre.value.isBlank()) {
+            _nombreError.value = "El nombre es requerido."
+            isValid = false
+        }
+
+        //Validación de Dirección.
+        if (_direccion.value.isBlank() || _direccion.value.length < 5) {
+            _direccionError.value = "La dirección es requerida y debe ser completa."
+            isValid = false
+        }
+
+        //Validación de Teléfono.
+        if (_telefono.value.isBlank() || _telefono.value.length < 9) {
+            _telefonoError.value = "El teléfono debe tener al menos 9 dígitos."
+            isValid = false
+        }
+
+        // Si es válido y no hay errores, la función retorna true.
+        return isValid
     }
 
     // Corrutina que guarda el estado actual del carrito en el DataStore.
